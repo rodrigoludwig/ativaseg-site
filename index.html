@@ -37,32 +37,51 @@ body{
   overflow-x:hidden;
 }
 
-.glow{
+.glow-parallax{
   position:fixed;
-  inset:-20%;
+  inset:0;
   z-index:0;
   pointer-events:none;
-  background:
-    radial-gradient(120vmax 70vmax at 50% -10%, rgba(238,183,5,.10), transparent 60%),
-    radial-gradient(90vmax 60vmax at 100% 110%, rgba(238,183,5,.06), transparent 55%);
-  animation:breathe 16s ease-in-out infinite alternate;
+  transform:translate3d(var(--px,0),var(--py,0),0);
+  transition:transform .5s cubic-bezier(.2,.7,.2,1);
 }
-@keyframes breathe{
-  from{opacity:.85; transform:scale(1)}
-  to{opacity:1; transform:scale(1.05)}
+.glow{
+  position:absolute;
+  inset:-20%;
+  background:
+    radial-gradient(120vmax 70vmax at 50% -10%, rgba(238,183,5,.13), transparent 60%),
+    radial-gradient(90vmax 60vmax at 100% 110%, rgba(238,183,5,.08), transparent 55%);
+  animation:auroraDrift 26s ease-in-out infinite;
+}
+@keyframes auroraDrift{
+  0%,100%{transform:translate(0,0) scale(1)}
+  25%{transform:translate(3.5%,-4%) scale(1.07)}
+  50%{transform:translate(-2.5%,2.5%) scale(1.02)}
+  75%{transform:translate(2.5%,3%) scale(1.06)}
 }
 
-.watermark{
+.watermark-parallax{
   position:fixed;
+  inset:0;
+  z-index:0;
+  pointer-events:none;
+  transform:translate3d(var(--px,0),var(--py,0),0);
+  transition:transform .5s cubic-bezier(.2,.7,.2,1);
+}
+.watermark{
+  position:absolute;
   right:-14vmax;
   bottom:-18vmax;
   width:60vmax;
   height:60vmax;
-  opacity:.05;
-  pointer-events:none;
-  z-index:0;
+  opacity:.06;
+  animation:wmDrift 42s ease-in-out infinite;
 }
 .watermark svg{width:100%;height:100%;display:block}
+@keyframes wmDrift{
+  0%,100%{transform:translate(0,0) rotate(0deg)}
+  50%{transform:translate(-2.5%,2%) rotate(1.4deg)}
+}
 
 .wrap{
   position:relative;
@@ -168,10 +187,27 @@ p.lede{
   transition:transform .18s ease, background .18s ease, border-color .18s ease;
 }
 .btn-primary{
+  position:relative;
+  overflow:hidden;
   background:var(--ouro);
   color:#1a1500;
 }
 .btn-primary:hover{transform:translateY(-1px);background:#f5c322}
+.btn-primary::after{
+  content:"";
+  position:absolute;
+  top:0; left:-60%;
+  width:40%; height:100%;
+  background:linear-gradient(120deg, transparent, rgba(255,255,255,.6), transparent);
+  transform:skewX(-20deg);
+  animation:shimmer 4.5s ease-in-out infinite;
+  animation-delay:2.2s;
+}
+@keyframes shimmer{
+  0%{left:-60%}
+  30%{left:130%}
+  100%{left:130%}
+}
 .btn-secondary{
   background:transparent;
   color:var(--papel);
@@ -212,15 +248,17 @@ footer{
   .eyebrow, h1, p.lede, .actions, footer{
     animation:none !important; opacity:1 !important; transform:none !important;
   }
-  .glow, .eyebrow::before{animation:none !important}
+  .glow, .watermark, .eyebrow::before, .btn-primary::after{animation:none !important}
+  .glow-parallax, .watermark-parallax{transition:none !important; transform:none !important}
 }
 </style>
 </head>
 <body>
 
-<div class="glow"></div>
+<div class="glow-parallax"><div class="glow"></div></div>
 
-<div class="watermark">
+<div class="watermark-parallax">
+  <div class="watermark">
 <svg id="Layer_2" data-name="Layer 2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 904.65 904.65">
   <defs>
     <style>
@@ -253,6 +291,7 @@ footer{
     </g>
   </g>
 </svg>
+  </div>
 </div>
 
 <div class="wrap">
@@ -352,6 +391,30 @@ footer{
     <a href="https://www.instagram.com/ativasegsis/" target="_blank" rel="noopener">@ativasegsis</a>
   </div>
 </footer>
+
+<script>
+(function(){
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (window.matchMedia && !window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  var glow = document.querySelector('.glow-parallax');
+  var wm = document.querySelector('.watermark-parallax');
+  var raf = null, lastX = 0.5, lastY = 0.5;
+  function apply(){
+    raf = null;
+    var gx = (lastX - .5) * 46, gy = (lastY - .5) * 46;
+    var wx = (lastX - .5) * -22, wy = (lastY - .5) * -22;
+    glow.style.setProperty('--px', gx.toFixed(1) + 'px');
+    glow.style.setProperty('--py', gy.toFixed(1) + 'px');
+    wm.style.setProperty('--px', wx.toFixed(1) + 'px');
+    wm.style.setProperty('--py', wy.toFixed(1) + 'px');
+  }
+  window.addEventListener('pointermove', function(e){
+    lastX = e.clientX / window.innerWidth;
+    lastY = e.clientY / window.innerHeight;
+    if (!raf) raf = requestAnimationFrame(apply);
+  }, {passive:true});
+})();
+</script>
 
 </body>
 </html>
